@@ -241,10 +241,10 @@ func OpenPty(attr *Attributes, size *WindowSize) (*Terminal,*Terminal,os.Error) 
 // Opens a pseudo-terminal, forks, sets up the pty slave as the new child process's controlling terminal and
 // stdin/stdout/stderr, and execs the given command in the child process.  Returns the child's pid,
 // the master and slave terminal controls, and an Error, if any.
-func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (int,*Terminal,*Terminal,os.Error) {
+func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*Terminal,*Terminal,int,os.Error) {
     master,slave,err := OpenPty(attr, size)
     if err != nil {
-        return -1,nil,nil,err
+        return nil,nil,-1,err
     }
 
     io := []*os.File{
@@ -255,9 +255,9 @@ func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (in
     procattr := &os.ProcAttr{"", nil, io}
     pid,err := StartProcessOnTty(name, argv, procattr, slave.Fd())
     if err != nil {
-        return -1,nil,nil,err
+        return nil,nil,-1,err
     }
 
-    return pid,master,slave,nil
+    return master,slave,pid,nil
 }
 
