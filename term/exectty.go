@@ -9,19 +9,19 @@
 package term
 
 import (
-    "syscall"
-    "os"
-    "unsafe"
+	"syscall"
+	"os"
+	"unsafe"
 )
 
 type procAttr struct {
-	Setsid     bool        // Create session.
-    Ctty       int         // Controlling terminal fd if Setsid (-1 for none)
-	Ptrace     bool        // Enable tracing.
-	Dir        string      // Current working directory.
-	Env        []string    // Environment.
-	Files      []int       // File descriptors.
-	Chroot     string      // Chroot.
+	Setsid	 bool		// Create session.
+	Ctty	   int		 // Controlling terminal fd if Setsid (-1 for none)
+	Ptrace	 bool		// Enable tracing.
+	Dir		string	  // Current working directory.
+	Env		[]string	// Environment.
+	Files	  []int	   // File descriptors.
+	Chroot	 string	  // Chroot.
 	Credential *syscall.Credential // Credential.
 }
 
@@ -29,42 +29,42 @@ type procAttr struct {
 // initiates a new session in the child process and takes a tty fd to be
 // handed over as the session's controlling terminal
 func StartProcessOnTty(name string, argv []string, attr *os.ProcAttr, tty int) (pid int, err os.Error) {
-    sysattr := &procAttr{
-        Setsid: true,
-        Ctty: tty,
-        Dir: attr.Dir,
-        Env: attr.Env,
-    }
+	sysattr := &procAttr{
+		Setsid: true,
+		Ctty: tty,
+		Dir: attr.Dir,
+		Env: attr.Env,
+	}
 
-    if sysattr.Env == nil {
-        sysattr.Env = os.Environ()
-    }
+	if sysattr.Env == nil {
+		sysattr.Env = os.Environ()
+	}
 
-    intfd := make([]int, len(attr.Files))
-    for i,f := range attr.Files {
-        if f == nil {
-            intfd[i] = -1
-        } else {
-            intfd[i] = f.Fd()
-        }
-    }
-    sysattr.Files = intfd
+	intfd := make([]int, len(attr.Files))
+	for i,f := range attr.Files {
+		if f == nil {
+			intfd[i] = -1
+		} else {
+			intfd[i] = f.Fd()
+		}
+	}
+	sysattr.Files = intfd
 
 	pid, e := forkExec(name, argv, sysattr)
-    if e != 0 {
-        return -1,&os.PathError{"fork/exec", name, os.Errno(e)}
-    }
-    return pid,nil
+	if e != 0 {
+		return -1,&os.PathError{"fork/exec", name, os.Errno(e)}
+	}
+	return pid,nil
 }
 
 func fcntl(fd, cmd, arg int) (int,int) {
-    r,_,e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd), uintptr(arg))
-    return int(r),int(e)
+	r,_,e := syscall.Syscall(syscall.SYS_FCNTL, uintptr(fd), uintptr(cmd), uintptr(arg))
+	return int(r),int(e)
 }
 
 func read(fd int, buf *byte, nbuf int) (int,int) {
-    r,_,e := syscall.Syscall(syscall.SYS_READ, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf))
-    return int(r),int(e)
+	r,_,e := syscall.Syscall(syscall.SYS_READ, uintptr(fd), uintptr(unsafe.Pointer(buf)), uintptr(nbuf))
+	return int(r),int(e)
 }
 
 func forkAndExecInChild(argv0 *byte, argv, envv []*byte, chroot, dir *byte, attr *procAttr, pipe int) (pid int, err int) {
@@ -115,12 +115,12 @@ func forkAndExecInChild(argv0 *byte, argv, envv []*byte, chroot, dir *byte, attr
 		if err1 != 0 {
 			goto childerror
 		}
-        if attr.Ctty >= 0 {
-            _, _, err1 = syscall.RawSyscall(syscall.SYS_IOCTL, uintptr(attr.Ctty), uintptr(TIOCSCTTY), 0)
-            if err1 != 0 {
-                goto childerror
-            }
-        }
+		if attr.Ctty >= 0 {
+			_, _, err1 = syscall.RawSyscall(syscall.SYS_IOCTL, uintptr(attr.Ctty), uintptr(TIOCSCTTY), 0)
+			if err1 != 0 {
+				goto childerror
+			}
+		}
 	}
 
 	// Chroot

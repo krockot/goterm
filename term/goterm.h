@@ -5,9 +5,9 @@
 #include <unistd.h>
 
 typedef struct {
-    int master;
-    int slave;
-    int result;
+	int master;
+	int slave;
+	int result;
 } openpty_result;
 
 openpty_result goterm_openpty(struct termios* ios, struct winsize* size);
