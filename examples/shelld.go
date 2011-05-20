@@ -67,15 +67,13 @@ func Serve(conn net.Conn) {
 }
 
 func main() {
-	l,err := net.Listen("tcp", ":23")
+	l,err := net.Listen("tcp", ":2323")
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
 		return
 	}
 
-	i := 0
 	for true {
-		i++
 		c,err := l.Accept()
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "Error: %v\n", err)
