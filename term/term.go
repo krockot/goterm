@@ -35,9 +35,12 @@ func (t *Terminal) Name() (string,os.Error) {
 	return C.GoString(cs),nil
 }
 
-// Closes the terminal's fd.
-func (t *Terminal) Close() {
-	C.close(C.int(t.Fd()))
+// Implements io.Closer
+func (t *Terminal) Close() os.Error {
+	if t == nil || t.file == nil {
+		return os.EINVAL
+	}
+	return t.file.Close()
 }
 
 // Returns the integer Unix file descriptor referencing the terminal
@@ -49,13 +52,19 @@ func (t *Terminal) File() *os.File {
 	return t.file
 }
 
-// Implements io.Read
+// Implements io.Reader
 func (t *Terminal) Read(buf []byte) (int,os.Error) {
+	if t == nil || t.file == nil {
+		return 0,os.EINVAL
+	}
 	return t.file.Read(buf)
 }
 
-// Implements io.Write
+// Implements io.Writer
 func (t *Terminal) Write(buf []byte) (int,os.Error) {
+	if t == nil || t.file == nil {
+		return 0,os.EINVAL
+	}
 	return t.file.Write(buf)
 }
 
