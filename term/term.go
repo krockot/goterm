@@ -241,19 +241,19 @@ func OpenPty(attr *Attributes, size *WindowSize) (*Terminal,*Terminal,os.Error) 
 	syscall.CloseOnExec(int(result.master))
 	syscall.CloseOnExec(int(result.slave))
 	syscall.ForkLock.RUnlock()
-	
+
 	master := &Terminal{os.NewFile(int(result.master), C.GoString(C.ttyname(result.master)))}
 	slave := &Terminal{os.NewFile(int(result.slave), C.GoString(C.ttyname(result.slave)))}
 	return master,slave,nil
 }
 
 // Opens a pseudo-terminal, forks, sets up the pty slave as the new child process's controlling terminal and
-// stdin/stdout/stderr, and execs the given command in the child process.  Returns the child's pid,
-// the master and slave terminal controls, and an Error, if any.
-func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*Terminal,*Terminal,int,os.Error) {
+// stdin/stdout/stderr, and execs the given command in the child process.  Returns the master
+// terminal control, the child pid, and an Error if any.
+func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*Terminal,int,os.Error) {
 	master,slave,err := OpenPty(attr, size)
 	if err != nil {
-		return nil,nil,-1,err
+		return nil,-1,err
 	}
 
 	io := []*os.File{
@@ -264,9 +264,8 @@ func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*T
 	procattr := &os.ProcAttr{"", nil, io}
 	pid,err := StartProcessOnTty(name, argv, procattr, slave.Fd())
 	if err != nil {
-		return nil,nil,-1,err
+		return nil,-1,err
 	}
-
-	return master,slave,pid,nil
+	return master,pid,nil
 }
 

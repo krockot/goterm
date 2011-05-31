@@ -7,7 +7,8 @@
 package main
 
 import(
-	"github.com/krockot/goterm/term"
+//	"github.com/krockot/goterm/term"
+	"term"
 	"fmt"
 	"net"
 	"os"
