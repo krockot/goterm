@@ -16,9 +16,19 @@ type Terminal struct {
 }
 
 // Returns a terminal controller for the current process's tty and an Error,
-// if any.
+// if any.  Equivalent to Open("/dev/tty").
 func Mine() (*Terminal,os.Error) {
 	file,err := os.OpenFile("/dev/tty", os.O_RDWR, 0666)
+	if err != nil {
+		return nil,err
+	}
+	return &Terminal{file},nil
+}
+
+// Returns a terminal controller for a given terminal device in the filesystem
+// and an Error if any.
+func Open(filename string) (*Terminal, os.Error) {
+	file, err := os.OpenFile(filename, os.O_RDWR, 0666)
 	if err != nil {
 		return nil,err
 	}
@@ -256,16 +266,24 @@ func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*T
 		return nil,-1,err
 	}
 
-	io := []*os.File{
-		os.NewFile(slave.Fd(), "/dev/stdin"),
-		os.NewFile(slave.Fd(), "/dev/stdout"),
-		os.NewFile(slave.Fd(), "/dev/stderr") }
+	procattr := &os.ProcAttr{
+		Dir: "",
+		Env: nil,
+		Files: []*os.File{
+			os.NewFile(slave.Fd(), "/dev/stdin"),
+			os.NewFile(slave.Fd(), "/dev/stdout"),
+			os.NewFile(slave.Fd(), "/dev/stderr"),
+		},
+		Sys: &syscall.SysProcAttr{
+			Setsid: true,
+			Setctty: true,
+		},
+	}
 
-	procattr := &os.ProcAttr{"", nil, io}
-	pid,err := StartProcessOnTty(name, argv, procattr, slave.Fd())
+	proc, err := os.StartProcess(name, argv, procattr)
 	if err != nil {
 		return nil,-1,err
 	}
-	return master,pid,nil
+	return master,proc.Pid,nil
 }
 

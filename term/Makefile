@@ -1,6 +1,6 @@
 include $(GOROOT)/src/Make.inc
 TARG=term
-GOFILES:=termdefs.go exectty.go
+GOFILES:=termdefs.go
 CGOFILES:=term.go
 CGO_OFILES:=goterm.o
 

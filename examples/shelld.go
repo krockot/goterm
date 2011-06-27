@@ -7,7 +7,8 @@
 package main
 
 import(
-	"github.com/krockot/goterm/term"
+//	"github.com/krockot/goterm/term"
+	"../term/_obj/term"
 	"fmt"
 	"net"
 	"os"
@@ -17,7 +18,7 @@ import(
 
 func Serve(conn net.Conn) {
 	defer conn.Close()
-	tty,pty,pid,err := term.ForkPty(
+	tty,pid,err := term.ForkPty(
 		"/bin/login",
 		[]string{"/bin/login"},
 		term.DefaultAttributes(),
@@ -28,11 +29,8 @@ func Serve(conn net.Conn) {
 		return
 	}
 
-	pty.Close()
-
 	defer os.Wait(pid, 0)
 	defer syscall.Kill(pid, 9)
-	defer pty.Close()
 
 	running := true
 
