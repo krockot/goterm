@@ -17,12 +17,12 @@ type Terminal struct {
 
 // Returns a terminal controller for the current process's tty and an Error,
 // if any.  Equivalent to Open("/dev/tty").
-func Mine() (*Terminal,os.Error) {
-	file,err := os.OpenFile("/dev/tty", os.O_RDWR, 0666)
+func Mine() (*Terminal, os.Error) {
+	file, err := os.OpenFile("/dev/tty", os.O_RDWR, 0666)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return &Terminal{file},nil
+	return &Terminal{file}, nil
 }
 
 // Returns a terminal controller for a given terminal device in the filesystem
@@ -30,19 +30,19 @@ func Mine() (*Terminal,os.Error) {
 func Open(filename string) (*Terminal, os.Error) {
 	file, err := os.OpenFile(filename, os.O_RDWR, 0666)
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
-	return &Terminal{file},nil
+	return &Terminal{file}, nil
 }
 
 // Returns the name of the terminal's tty device and an error if
 // the terminal's fd is not a tty.
-func (t *Terminal) Name() (string,os.Error) {
+func (t *Terminal) Name() (string, os.Error) {
 	cs := C.ttyname(C.int(t.Fd()))
 	if cs == nil {
-		return "",os.NewError("Not a tty")
+		return "", os.NewError("Not a tty")
 	}
-	return C.GoString(cs),nil
+	return C.GoString(cs), nil
 }
 
 // Implements io.Closer
@@ -63,17 +63,17 @@ func (t *Terminal) File() *os.File {
 }
 
 // Implements io.Reader
-func (t *Terminal) Read(buf []byte) (int,os.Error) {
+func (t *Terminal) Read(buf []byte) (int, os.Error) {
 	if t == nil || t.file == nil {
-		return 0,os.EINVAL
+		return 0, os.EINVAL
 	}
 	return t.file.Read(buf)
 }
 
 // Implements io.Writer
-func (t *Terminal) Write(buf []byte) (int,os.Error) {
+func (t *Terminal) Write(buf []byte) (int, os.Error) {
 	if t == nil || t.file == nil {
-		return 0,os.EINVAL
+		return 0, os.EINVAL
 	}
 	return t.file.Write(buf)
 }
@@ -81,10 +81,10 @@ func (t *Terminal) Write(buf []byte) (int,os.Error) {
 // Attributes holds terminal control flags.  This structure is a direct analog
 // of the standard termios struct defined in termios.h.
 type Attributes struct {
-	Input uint32
-	Output uint32
-	Control uint32
-	Local uint32
+	Input        uint32
+	Output       uint32
+	Control      uint32
+	Local        uint32
 	ControlChars [C.NCCS]byte
 }
 
@@ -95,10 +95,10 @@ func DefaultAttributes() *Attributes {
 		CS8 | CREAD | B38400,
 		IEXTEN | CLOCAL | PARENB | ECHOK | ECHOE | ECHO | ICANON | ISIG,
 		[C.NCCS]byte{
-			3,28,127,21,4,0,1,0,
-			17,19,26,0,18,15,23,22,
-			0,0,0,0,0,0,0,0,
-			0,0,0,0,0,0,0,0,
+			3, 28, 127, 21, 4, 0, 1, 0,
+			17, 19, 26, 0, 18, 15, 23, 22,
+			0, 0, 0, 0, 0, 0, 0, 0,
+			0, 0, 0, 0, 0, 0, 0, 0,
 		},
 	}
 }
@@ -106,8 +106,8 @@ func DefaultAttributes() *Attributes {
 // WindowSize is an analog of the winsize struct defined in sys/ioctl.h.  It
 // represents the dimensions (in characters or pixels) of a terminal window.
 type WindowSize struct {
-	Rows, Cols uint16
-	PixelWidth,PixelHeight uint16
+	Rows, Cols              uint16
+	PixelWidth, PixelHeight uint16
 }
 
 func NewWindowSize(cols, rows uint16) *WindowSize {
@@ -156,24 +156,24 @@ func makeGoWindowSize(winsize *C.struct_winsize) *WindowSize {
 		uint16(winsize.ws_row),
 		uint16(winsize.ws_col),
 		uint16(winsize.ws_xpixel),
-		uint16(winsize.ws_ypixel) }
+		uint16(winsize.ws_ypixel)}
 }
 
 // Option flags for SetAttributes
-const(
-	NOW = int(C.TCSANOW)
+const (
+	NOW   = int(C.TCSANOW)
 	DRAIN = int(C.TCSADRAIN)
 	FLUSH = int(C.TCSAFLUSH)
 )
 
 // Gets a terminal's attributes.  Akin to tcgetattr().
-func (t *Terminal) GetAttributes() (*Attributes,os.Error) {
+func (t *Terminal) GetAttributes() (*Attributes, os.Error) {
 	var cattr C.struct_termios
 	result := int(C.tcgetattr(C.int(t.Fd()), &cattr))
 	if result < 0 {
-		return nil,os.NewError("Unable to get terminal attributes.")
+		return nil, os.NewError("Unable to get terminal attributes.")
 	}
-	return makeGoAttributes(&cattr),nil
+	return makeGoAttributes(&cattr), nil
 }
 
 // Sets a terminal's attributes.  Akin to tcsetattr().
@@ -191,7 +191,7 @@ func (t *Terminal) SetAttributes(attr *Attributes, options int) os.Error {
 // the Attributes argument are ORed with the terminal's current attribute set.
 // Control character settings are unchanged.
 func (t *Terminal) EnableAttributes(attr *Attributes, options int) os.Error {
-	oattr,err := t.GetAttributes()
+	oattr, err := t.GetAttributes()
 	if err != nil {
 		return err
 	}
@@ -206,7 +206,7 @@ func (t *Terminal) EnableAttributes(attr *Attributes, options int) os.Error {
 // the Attributes argument are cleared from terminal's current attribute set.
 // Control character settings are unchanged.
 func (t *Terminal) DisableAttributes(attr *Attributes, options int) os.Error {
-	oattr,err := t.GetAttributes()
+	oattr, err := t.GetAttributes()
 	if err != nil {
 		return err
 	}
@@ -218,12 +218,12 @@ func (t *Terminal) DisableAttributes(attr *Attributes, options int) os.Error {
 }
 
 // Gets the window size of a terminal
-func (t *Terminal) GetWindowSize() (*WindowSize,os.Error) {
+func (t *Terminal) GetWindowSize() (*WindowSize, os.Error) {
 	var winsize C.struct_winsize
 	if C.goterm_get_window_size(C.int(t.Fd()), &winsize) < 0 {
-		return nil,os.NewError("Unable to get window size.")
+		return nil, os.NewError("Unable to get window size.")
 	}
-	return makeGoWindowSize(&winsize),nil
+	return makeGoWindowSize(&winsize), nil
 }
 
 // Sets the window size of a terminal
@@ -237,7 +237,7 @@ func (t *Terminal) SetWindowSize(sz *WindowSize) os.Error {
 
 // Opens an available pseudo-terminal and returns Terminal controllers for the master and
 // slave.  Also returns an Error, if any.
-func OpenPty(attr *Attributes, size *WindowSize) (*Terminal,*Terminal,os.Error) {
+func OpenPty(attr *Attributes, size *WindowSize) (*Terminal, *Terminal, os.Error) {
 	cattr := makeCAttributes(attr)
 	csize := makeCWindowSize(size)
 
@@ -246,7 +246,7 @@ func OpenPty(attr *Attributes, size *WindowSize) (*Terminal,*Terminal,os.Error) 
 	result := C.goterm_openpty(&cattr, &csize)
 	if result.result < 0 {
 		syscall.ForkLock.RUnlock()
-		return nil,nil,os.NewError("Unable to open pty.")
+		return nil, nil, os.NewError("Unable to open pty.")
 	}
 	syscall.CloseOnExec(int(result.master))
 	syscall.CloseOnExec(int(result.slave))
@@ -254,16 +254,16 @@ func OpenPty(attr *Attributes, size *WindowSize) (*Terminal,*Terminal,os.Error) 
 
 	master := &Terminal{os.NewFile(int(result.master), C.GoString(C.ttyname(result.master)))}
 	slave := &Terminal{os.NewFile(int(result.slave), C.GoString(C.ttyname(result.slave)))}
-	return master,slave,nil
+	return master, slave, nil
 }
 
 // Opens a pseudo-terminal, forks, sets up the pty slave as the new child process's controlling terminal and
 // stdin/stdout/stderr, and execs the given command in the child process.  Returns the master
 // terminal control, the child pid, and an Error if any.
-func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*Terminal,int,os.Error) {
-	master,slave,err := OpenPty(attr, size)
+func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*Terminal, int, os.Error) {
+	master, slave, err := OpenPty(attr, size)
 	if err != nil {
-		return nil,-1,err
+		return nil, -1, err
 	}
 
 	procattr := &os.ProcAttr{
@@ -275,15 +275,14 @@ func ForkPty(name string, argv []string, attr *Attributes, size *WindowSize) (*T
 			os.NewFile(slave.Fd(), "/dev/stderr"),
 		},
 		Sys: &syscall.SysProcAttr{
-			Setsid: true,
+			Setsid:  true,
 			Setctty: true,
 		},
 	}
 
 	proc, err := os.StartProcess(name, argv, procattr)
 	if err != nil {
-		return nil,-1,err
+		return nil, -1, err
 	}
-	return master,proc.Pid,nil
+	return master, proc.Pid, nil
 }
-
